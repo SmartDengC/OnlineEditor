@@ -1,7 +1,6 @@
 <template>
   <div>
-    <h1>MonacoEditor</h1>
-    <select v-model="choiceLanguage">
+    <select v-model="choiceLanguage" class="selectStyle">
       <option
         v-for="option in language"
         :key="option.value"
@@ -15,7 +14,7 @@
 </template>
 
 <script>
-import MonacoEditor from "@/components/MonacoEditorComponents";
+import MonacoEditor from "@/components/MonacoEditor";
 export default {
   name: "Father",
   data() {
@@ -34,3 +33,11 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.selectStyle {
+  display: inline-block;
+  padding: 5px;
+  /* padding-left: 24px; */
+}
+</style>
