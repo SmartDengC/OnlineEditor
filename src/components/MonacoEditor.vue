@@ -28,7 +28,7 @@ export default {
       this.editor = monaco.editor.create(this.$refs.editor, {
         value: this.code,
         language: this.language,
-        theme: "vs-dark", // 官方自带三种主题， vs， hc-btack or vs-dark
+        theme: "vs", // 官方自带三种主题， vs， hc-btack or vs-dark
         acceptSuggestionOnCommitCharacter: true, // 接受关于提交字符的建议
         acceptSuggestionOnEnter: "on", // 接受输入建议 "on" | "off" | "smart"
         accessibilityPageSize: 10, // 辅助功能页面大小 Number 说明：控制编辑器中可由屏幕阅读器读出的行数。警告：这对大于默认值的数字具有性能含义。

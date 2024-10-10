@@ -3,7 +3,9 @@
     <nav>
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link> ｜
-      <router-link to="/monacoEditor">MonacoEditor</router-link>
+      <router-link to="/monacoEditor">MonacoEditor</router-link>|
+      <router-link to="/leetcode">Leetcode</router-link>|
+      <router-link to="/layoutTest">layoutTest</router-link>
     </nav>
     <router-view />
   </div>

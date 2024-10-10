@@ -24,6 +24,16 @@ const routes = [
     name: "monacoEditor",
     component: () => import("../views/MonacoEditorView.vue"),
   },
+  {
+    path: "/leetcode",
+    name: "leetcode",
+    component: () => import("../views/Leetcode.vue"),
+  },
+  {
+    path: "/layoutTest",
+    name: "layoutTest",
+    component: () => import("../views/LayoutTest.vue"),
+  },
 ];
 
 const router = new VueRouter({
