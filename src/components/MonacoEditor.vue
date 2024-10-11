@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div ref="editor" class="editor"></div>
-    <div class="right">
-      <h1>右侧展示区</h1>
-      <p>{{ code }}</p>
-    </div>
+    <div
+      ref="editor"
+      class="editor"
+      v-on:listenToChildEvent="showMsgFrom"
+    ></div>
   </div>
 </template>
 
@@ -109,18 +109,11 @@ export default {
 
 <style scoped>
 .editor {
-  /* width: 100%; */
-  /* min-height: 100%; */
-  float: left;
-  width: 50%;
-  height: 600px;
-  border: 3px solid black;
+  float: center;
+  width: 90%;
+  height: 300px;
+  border: 1px solid;
   text-align: left;
-}
-.right {
-  /* background-color: orange; */
-  border: 3px solid black;
-  margin-left: 40%;
-  height: 600px;
+  margin: 0 auto;
 }
 </style>
