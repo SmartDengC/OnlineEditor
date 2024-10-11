@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css?family=Muli&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Muli", sans-serif;
+  display: flex; /* 默认交叉轴是是垂直方向*/
+  /* column就剧中了？ */
+  /* flex-direction: column; */
+  /* align-items定义了所有行的字元素在交叉轴方向的对齐方式 */
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  /* ? */
+  overflow: hidden;
+  /* ? */
+  margin: 0;
+}
+
+.container {
+  /* flex 里面的元素也可以设置flex？ */
+  display: flex;
+  width: 90vw;
+}
+
+.panel {
+  /* ? */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 80vh;
+  border-radius: 50px;
+  color: #fff;
+  flex: 0.5;
+  cursor: pointer;
+  margin: 10px;
+  position: relative;
+  -webkit-transition: all 700ms ease-in;
+}
+
+.panel h3 {
+  font-size: 24px;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  margin: 0;
+  /* ? */
+  opacity: 0;
+}
+
+.panel.active {
+  /* 通过用flex的不同的比例 + active的点击事件来做 */
+  flex: 5;
+}
+.panel.active h3 {
+  opacity: 1;
+  transition: opacity 0.3s ease-in 0.4s;
+}
+@media (max-width: 480px) {
+  .container {
+    width: 100vw;
+  }
+  .panel:nth-of-type(4),
+  .panel:nth-of-type(5) {
+    display: none;
+  }
+}
