@@ -1,34 +1,165 @@
 <template>
-  <div>
-    <div
-      ref="editor"
-      class="editor"
-      v-on:listenToChildEvent="showMsgFrom"
-    ></div>
+  <div class="editor-container">
+    <div class="toolbar">
+      <button @click="format" class="toolbar-btn">格式化代码</button>
+      <button @click="run" class="toolbar-btn">运行代码</button>
+      <select v-model="currentTheme" @change="changeTheme" class="theme-select">
+        <option value="vs">浅色主题</option>
+        <option value="vs-dark">深色主题</option>
+        <option value="hc-black">高对比度</option>
+      </select>
+    </div>
+    <div ref="editor" class="editor"></div>
+    <div v-if="output" class="output-panel">
+      <div class="output-header">
+        <span>输出结果</span>
+        <button @click="clearOutput" class="clear-btn">清除</button>
+      </div>
+      <pre class="output-content">{{ output }}</pre>
+    </div>
   </div>
 </template>
 
 <script>
 import * as monaco from "monaco-editor";
+import { runCode, getCodeTemplate } from "@/api/codeRunner";
+
+// 代码提示配置
+const vCompletion = [
+  {
+    label: "console.log",
+    kind: monaco.languages.CompletionItemKind.Function,
+    insertText: "console.log($1)",
+    insertTextRules:
+      monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+    documentation: "输出日志到控制台",
+  },
+  {
+    label: "function",
+    kind: monaco.languages.CompletionItemKind.Snippet,
+    insertText: ["function ${1:name}(${2:params}) {", "\t$0", "}"].join("\n"),
+    insertTextRules:
+      monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+    documentation: "创建一个函数",
+  },
+];
+
+// 导入语言支持
+import "monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution";
+import "monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution";
+import "monaco-editor/esm/vs/basic-languages/css/css.contribution";
+import "monaco-editor/esm/vs/basic-languages/html/html.contribution";
+import "monaco-editor/esm/vs/basic-languages/python/python.contribution";
+// 注：在Monaco Editor 0.30.1版本中，格式化功能已内置，无需额外导入
+
 export default {
   name: "MonacoEditor",
   props: ["language"],
   data() {
     return {
-      code: "print('hello world')",
+      code: "",
       editor: null,
+      output: "",
+      currentTheme: "vs-dark",
+      isRunning: false,
     };
   },
   mounted() {
     this.init();
+    // 设置初始代码模板
+    setTimeout(() => {
+      if (this.editor) {
+        this.editor.setValue(getCodeTemplate(this.language));
+      }
+    }, 100);
+  },
+
+  watch: {
+    language(newLang, oldLang) {
+      if (newLang !== oldLang) {
+        this.code = getCodeTemplate(newLang);
+        this.changeEditor();
+      }
+    },
   },
   methods: {
+    async run() {
+      if (this.isRunning) {
+        return;
+      }
+
+      this.isRunning = true;
+      this.output = "运行中...";
+
+      try {
+        // 获取当前编辑器内容
+        const code = this.editor ? this.editor.getValue() : this.code;
+
+        if (!code || code.trim() === "") {
+          this.output = "错误: 请先输入代码";
+          this.isRunning = false;
+          return;
+        }
+
+        // 确保语言设置正确
+        const currentLanguage =
+          this.editor?.getModel()?.getLanguageId() || this.language;
+        console.log(
+          `运行代码，语言: ${currentLanguage}，代码长度: ${code.length}字符`
+        );
+
+        const result = await runCode(code, currentLanguage);
+
+        if (result.success) {
+          this.output = result.output || "程序执行完成";
+        } else {
+          this.output = `执行失败: ${result.output}`;
+        }
+      } catch (error) {
+        console.error("代码执行错误:", error);
+        this.output = `错误: ${error.message || "未知错误"}`;
+      } finally {
+        this.isRunning = false;
+      }
+    },
+
+    clearOutput() {
+      this.output = "";
+    },
+
+    changeTheme(event) {
+      monaco.editor.setTheme(this.currentTheme);
+    },
+
+    async format() {
+      if (!this.editor) return;
+
+      try {
+        // 直接触发格式化命令
+        await this.editor.trigger("source", "editor.action.formatDocument");
+        this.output = "格式化完成";
+      } catch (error) {
+        this.output = `格式化失败: ${error.message}`;
+        console.error("格式化错误:", error);
+      }
+    },
+
+    changeEditor() {
+      if (this.editor) {
+        // 更新编辑器的语言和内容
+        monaco.editor.setModelLanguage(this.editor.getModel(), this.language);
+        this.editor.setValue(getCodeTemplate(this.language));
+      }
+    },
+
     init() {
-      // 初始化编辑器
+      // 配置编辑器实例
       this.editor = monaco.editor.create(this.$refs.editor, {
         value: this.code,
         language: this.language,
-        theme: "vs", // 官方自带三种主题， vs， hc-btack or vs-dark
+        theme: this.currentTheme, // 使用当前主题
+        formatOnPaste: true, // 粘贴时自动格式化
+        formatOnType: true, // 输入时自动格式化
         acceptSuggestionOnCommitCharacter: true, // 接受关于提交字符的建议
         acceptSuggestionOnEnter: "on", // 接受输入建议 "on" | "off" | "smart"
         accessibilityPageSize: 10, // 辅助功能页面大小 Number 说明：控制编辑器中可由屏幕阅读器读出的行数。警告：这对大于默认值的数字具有性能含义。
@@ -83,37 +214,74 @@ export default {
         },
       });
     },
-
-    // 自动格式化代码
-    format() {
-      // this.editor.trigger("anything", "editor.action.formatDocument");
-      // 或者
-      // this.editor.getAction(['editor.action.formatDocument']).run()
-      //或者
-      //自定义格式化 后赋值
-    },
-    changeEditor() {
-      if (this.editor === null) {
-        this.init();
-      }
-      const oldModel = this.editor.getModel();
-      const newModel = monaco.editor.createModel(this.code, this.language);
-      if (oldModel) {
-        oldModel.dispose();
-      }
-      this.editor.setModel(newModel);
-    },
   },
 };
 </script>
 
 <style scoped>
-.editor {
-  float: center;
+.editor-container {
   width: 90%;
-  height: 300px;
-  border: 1px solid;
+  margin: 20px auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toolbar {
+  padding: 8px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+}
+
+.toolbar-btn,
+.clear-btn {
+  padding: 4px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.toolbar-btn:hover,
+.clear-btn:hover {
+  background: #e6e6e6;
+}
+
+.theme-select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.editor {
+  height: 400px;
   text-align: left;
-  margin: 0 auto;
+}
+
+.output-panel {
+  border-top: 1px solid #ddd;
+  background: #f8f8f8;
+}
+
+.output-header {
+  padding: 8px;
+  background: #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.output-content {
+  margin: 0;
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
+  font-size: 14px;
 }
 </style>
